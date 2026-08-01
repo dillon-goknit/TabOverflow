@@ -1,0 +1,14 @@
+# Binaries
+taboverflow
+*.exe
+*.test
+*.out
+
+# Local data file
+links.json
+
+# Editor / OS
+.DS_Store
+*.swp
+.idea/
+.vscode/

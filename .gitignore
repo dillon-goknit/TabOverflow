@@ -12,3 +12,7 @@ links.json
 *.swp
 .idea/
 .vscode/
+
+#Plan file
+plan.md
+tabs.txt

@@ -41,3 +41,21 @@ func save(links []Link) error {
 	}
 	return os.WriteFile("links.json", data, 0o644)
 }
+
+func load() ([]Link, error) {
+	data, err := os.ReadFile("links.json")
+	if err != nil {
+		if os.IsNotExist(err) {
+			return []Link{}, nil
+		}
+		return nil, err
+	}
+
+	var links []Link
+
+	err = json.Unmarshal(data, &links)
+	if err != nil {
+		return nil, err
+	}
+	return links, nil
+}

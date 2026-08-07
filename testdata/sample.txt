@@ -1,0 +1,4 @@
+https://example.com
+
+https://github.com/foo/bar
+   https://example.org/trailing-spaces

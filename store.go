@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// import the links from docs/tabs.txt and convert to []Link structs. URL only item populated in struct
 func importLinks(path string) ([]Link, error) {
 	tabs, err := os.Open(path)
 	if err != nil {
@@ -32,6 +33,7 @@ func importLinks(path string) ([]Link, error) {
 	return links, nil
 }
 
+// one time function to turn tabs.txt file to json
 func save(links []Link) error {
 	data, err := json.MarshalIndent(links, "", " ")
 	if err != nil {

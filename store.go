@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"io"
 	"os"
 	"strings"
@@ -29,4 +30,12 @@ func importLinks(path string) ([]Link, error) {
 	}
 
 	return links, nil
+}
+
+func save(links []Link) error {
+	data, err := json.MarshalIndent(links, "", " ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile("links.json", data, 0o644)
 }

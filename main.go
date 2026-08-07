@@ -10,5 +10,5 @@ func main() {
 		fmt.Println("Error:", err)
 		return
 	}
-	fmt.Printf("%+v\n", links)
+	save(links)
 }

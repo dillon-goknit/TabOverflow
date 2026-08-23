@@ -7,7 +7,7 @@ import (
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Println("usage: taboverflow: <command>") // list the commands
+		fmt.Println("usage: taboverflow: <command>")
 		return
 	}
 

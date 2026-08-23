@@ -27,13 +27,13 @@ func importLinks(path string) ([]Link, error) {
 		if line == "" {
 			continue
 		}
-		links = append(links, Link{URL: line})
+		links = append(links, Link{URL: normalizeURL(line)})
 	}
 
 	return links, nil
 }
 
-// one time function to turn tabs.txt file to json
+// save writes the full link slice to links.json, overwriting it
 func save(links []Link) error {
 	data, err := json.MarshalIndent(links, "", " ")
 	if err != nil {

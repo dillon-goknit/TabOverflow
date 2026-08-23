@@ -18,7 +18,9 @@ func main() {
 			fmt.Println("add requires a URL")
 			return
 		}
-		cmdAdd(os.Args[2])
+		if err := cmdAdd(os.Args[2]); err != nil {
+			fmt.Println("Error", err)
+		}
 	case "list":
 		cmdList()
 	case "pick":

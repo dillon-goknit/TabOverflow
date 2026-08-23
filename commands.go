@@ -1,11 +1,34 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"time"
 )
 
-func cmdAdd(url string) {
-	fmt.Println("add not yet implemented")
+func cmdAdd(rawURL string) error {
+	url := normalizeURL(rawURL)
+
+	links, err := load()
+	if err != nil {
+		return err
+	}
+
+	for _, existing := range links {
+		if existing.URL == url {
+			return errors.New("link already exists")
+		}
+	}
+
+	link := Link{
+		URL:   url,
+		Added: time.Now(),
+		Tags:  []string{guessType(url)},
+	}
+
+	links = append(links, link)
+
+	return save(links)
 }
 
 func cmdList() {

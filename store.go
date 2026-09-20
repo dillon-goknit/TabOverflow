@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
-// import the links from docs/tabs.txt and convert to []Link structs. URL only item populated in struct
 func importLinks(path string) ([]Link, error) {
 	tabs, err := os.Open(path)
 	if err != nil {
@@ -33,17 +33,41 @@ func importLinks(path string) ([]Link, error) {
 	return links, nil
 }
 
-// save writes the full link slice to links.json, overwriting it
+func dataPath() (string, error) {
+	if p := os.Getenv("TABOVERFLOW_DATA"); p != "" {
+		return p, nil
+	}
+
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, "taboverflow", "links.json"), nil
+}
+
 func save(links []Link) error {
+	path, err := dataPath()
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+
 	data, err := json.MarshalIndent(links, "", " ")
 	if err != nil {
 		return err
 	}
-	return os.WriteFile("links.json", data, 0o644)
+	return os.WriteFile(path, data, 0o644)
 }
 
 func load() ([]Link, error) {
-	data, err := os.ReadFile("links.json")
+	path, err := dataPath()
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return []Link{}, nil

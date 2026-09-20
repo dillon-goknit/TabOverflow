@@ -1,6 +1,14 @@
 package main
 
-import "testing"
+import (
+	"path/filepath"
+	"testing"
+)
+
+func useTempStore(t *testing.T) {
+	t.Helper()
+	t.Setenv("TABOVERFLOW_DATA", filepath.Join(t.TempDir(), "links.json"))
+}
 
 func TestImportLinks(t *testing.T) {
 	got, err := importLinks("testdata/sample.txt")
@@ -13,7 +21,7 @@ func TestImportLinks(t *testing.T) {
 }
 
 func TestSaveLoadRoundTrip(t *testing.T) {
-	t.Chdir(t.TempDir())
+	useTempStore(t)
 
 	want := []Link{
 		{URL: "https://example.com"},
@@ -40,7 +48,7 @@ func TestSaveLoadRoundTrip(t *testing.T) {
 }
 
 func TestLoadMissingFile(t *testing.T) {
-	t.Chdir(t.TempDir())
+	useTempStore(t)
 
 	got, err := load()
 	if err != nil {

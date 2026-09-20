@@ -5,7 +5,7 @@ import (
 )
 
 func TestCmdAdd(t *testing.T) {
-	t.Chdir(t.TempDir())
+	useTempStore(t)
 
 	if err := cmdAdd("https://example.com/article"); err != nil {
 		t.Fatalf("cmdAdd failed: %v", err)
@@ -26,7 +26,7 @@ func TestCmdAdd(t *testing.T) {
 }
 
 func TestCmdAddKeepsRawURL(t *testing.T) {
-	t.Chdir(t.TempDir())
+	useTempStore(t)
 
 	raw := "https://example.com/post?utm_source=twitter&id=42"
 
@@ -44,7 +44,7 @@ func TestCmdAddKeepsRawURL(t *testing.T) {
 }
 
 func TestCmdAddTrimsInput(t *testing.T) {
-	t.Chdir(t.TempDir())
+	useTempStore(t)
 
 	raw := "https://example.com/post"
 
@@ -62,7 +62,7 @@ func TestCmdAddTrimsInput(t *testing.T) {
 }
 
 func TestCmdAddDedupesStoredTrackingURL(t *testing.T) {
-	t.Chdir(t.TempDir())
+	useTempStore(t)
 
 	if err := cmdAdd("https://example.com/article?utm_source=x"); err != nil {
 		t.Fatalf("first add: %v", err)
@@ -73,7 +73,7 @@ func TestCmdAddDedupesStoredTrackingURL(t *testing.T) {
 }
 
 func TestCmdAddRejectsEmpty(t *testing.T) {
-	t.Chdir(t.TempDir())
+	useTempStore(t)
 
 	if err := cmdAdd("   "); err == nil {
 		t.Errorf("expected error on empty URL, got nil")

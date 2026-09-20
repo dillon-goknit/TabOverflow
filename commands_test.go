@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"strings"
 	"testing"
 )
 
@@ -85,5 +87,114 @@ func TestCmdAddRejectsEmpty(t *testing.T) {
 	}
 	if len(links) != 0 {
 		t.Errorf("got %d links, want 0", len(links))
+	}
+}
+
+func TestCmdListEmpty(t *testing.T) {
+	useTempStore(t)
+
+	var buf bytes.Buffer
+	if err := cmdList(&buf); err != nil {
+		t.Fatalf("cmdList failed: %v", err)
+	}
+
+	got := buf.String()
+	if !strings.Contains(got, "no links") {
+		t.Errorf("output = %q, want it to mention an empty pile", got)
+	}
+}
+
+func TestCmdListShowsLinks(t *testing.T) {
+	useTempStore(t)
+
+	links := []Link{
+		{URL: "https://example.com/post", Tags: []string{"article"}},
+		{URL: "https://github.com/foo/bar", Tags: []string{"repo"}},
+	}
+	if err := save(links); err != nil {
+		t.Fatalf("save failed: %v", err)
+	}
+
+	var buf bytes.Buffer
+	if err := cmdList(&buf); err != nil {
+		t.Fatalf("cmdList failed: %v", err)
+	}
+
+	got := buf.String()
+	for _, want := range []string{
+		"https://example.com/post [article]",
+		"https://github.com/foo/bar [repo]",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("output = %q, want it to contain %q", got, want)
+		}
+	}
+}
+
+func TestCmdListHidesReadLinks(t *testing.T) {
+	useTempStore(t)
+
+	links := []Link{
+		{URL: "https://example.com/unread", Tags: []string{"article"}},
+		{URL: "https://example.com/done", Tags: []string{"article"}, Read: true},
+	}
+	if err := save(links); err != nil {
+		t.Fatalf("save failed: %v", err)
+	}
+
+	var buf bytes.Buffer
+	if err := cmdList(&buf); err != nil {
+		t.Fatalf("cmdList failed: %v", err)
+	}
+
+	got := buf.String()
+	if !strings.Contains(got, "https://example.com/unread") {
+		t.Errorf("output = %q, want it to contain the unread link", got)
+	}
+	if strings.Contains(got, "https://example.com/done") {
+		t.Errorf("output = %q, want it to omit the read link", got)
+	}
+}
+
+func TestCmdListAllRead(t *testing.T) {
+	useTempStore(t)
+
+	links := []Link{
+		{URL: "https://example.com/done", Tags: []string{"article"}, Read: true},
+	}
+	if err := save(links); err != nil {
+		t.Fatalf("save failed: %v", err)
+	}
+
+	var buf bytes.Buffer
+	if err := cmdList(&buf); err != nil {
+		t.Fatalf("cmdList failed: %v", err)
+	}
+
+	got := buf.String()
+	if !strings.Contains(got, "no links") {
+		t.Errorf("output = %q, want it to mention an empty pile", got)
+	}
+}
+
+func TestCmdListUntaggedLink(t *testing.T) {
+	useTempStore(t)
+
+	links := []Link{{URL: "https://example.com/untagged"}}
+	if err := save(links); err != nil {
+		t.Fatalf("save failed: %v", err)
+	}
+
+	var buf bytes.Buffer
+	if err := cmdList(&buf); err != nil {
+		t.Fatalf("cmdList failed: %v", err)
+	}
+
+	got := buf.String()
+	if !strings.Contains(got, "https://example.com/untagged") {
+		t.Errorf("output = %q, want the URL", got)
+	}
+	if strings.Contains(got, "[") {
+		t.Errorf("output = %q, want no tag brackets", got)
 	}
 }

@@ -39,7 +39,29 @@ func cmdAdd(rawURL string) error {
 }
 
 func cmdList(w io.Writer) error {
-	fmt.Println("list not yet implemented")
+	links, err := load()
+	if err != nil {
+		return err
+	}
+
+	var unread []Link
+	for _, link := range links {
+		if !link.Read {
+			unread = append(unread, link)
+		}
+	}
+
+	if len(unread) == 0 {
+		fmt.Fprintln(w, "no links")
+	}
+
+	for _, link := range unread {
+		if len(link.Tags) == 0 {
+			fmt.Fprintln(w, link.URL)
+		} else {
+			fmt.Fprintf(w, "%s [%s]\n", link.URL, link.Tags[0])
+		}
+	}
 	return nil
 }
 

@@ -37,18 +37,22 @@ func cmdAdd(rawURL string) error {
 	return save(links)
 }
 
-func cmdList() {
+func cmdList() error {
 	fmt.Println("list not yet implemented")
+	return nil
 }
 
-func cmdPick() {
+func cmdPick() error {
 	fmt.Println("pick not yet implemented")
+	return nil
 }
 
-func cmdDone(url string) {
+func cmdDone(url string) error {
 	fmt.Println("done not yet implemented")
+	return nil
 }
 
-func cmdRm(url string) {
+func cmdRm(url string) error {
 	fmt.Println("rm not yet implemented")
+	return nil
 }

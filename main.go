@@ -25,22 +25,20 @@ func run(args []string) error {
 		}
 		return cmdAdd(args[1])
 	case "list":
-		cmdList()
+		return cmdList()
 	case "pick":
-		cmdPick()
+		return cmdPick()
 	case "done":
 		if len(args) < 2 {
 			return errors.New("done requires a URL")
 		}
-		cmdDone(args[1])
+		return cmdDone(args[1])
 	case "rm":
 		if len(args) < 2 {
 			return errors.New("rm requires a URL")
 		}
-		cmdRm(args[1])
+		return cmdRm(args[1])
 	default:
 		return fmt.Errorf("unknown command: %s", args[0])
 	}
-
-	return nil
 }

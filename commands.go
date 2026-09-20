@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 	"time"
 )
@@ -37,22 +38,22 @@ func cmdAdd(rawURL string) error {
 	return save(links)
 }
 
-func cmdList() error {
+func cmdList(w io.Writer) error {
 	fmt.Println("list not yet implemented")
 	return nil
 }
 
-func cmdPick() error {
+func cmdPick(w io.Writer) error {
 	fmt.Println("pick not yet implemented")
 	return nil
 }
 
-func cmdDone(url string) error {
+func cmdDone(w io.Writer, url string) error {
 	fmt.Println("done not yet implemented")
 	return nil
 }
 
-func cmdRm(url string) error {
+func cmdRm(w io.Writer, url string) error {
 	fmt.Println("rm not yet implemented")
 	return nil
 }

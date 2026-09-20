@@ -1,5 +1,6 @@
 # Binaries
-taboverflow
+/TabOverflow
+/taboverflow
 *.exe
 *.test
 *.out

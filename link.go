@@ -37,7 +37,7 @@ func guessType(rawURL string) string {
 	case hostMatches(host, "goodreads.com"):
 		return "book"
 	case hostMatches(host, "x.com"), hostMatches(host, "twitter.com"):
-		return "twitter link"
+		return "twitterlink"
 	default:
 		return "article"
 	}

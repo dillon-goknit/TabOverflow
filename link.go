@@ -14,24 +14,29 @@ type Link struct {
 	Read  bool
 }
 
+func hostMatches(host, domain string) bool {
+	return host == domain || strings.HasSuffix(host, "."+domain)
+}
+
 func guessType(rawURL string) string {
 	u, err := url.Parse(rawURL)
 	if err != nil {
 		return "article"
 	}
 
-	host := u.Host
+	host := strings.ToLower(u.Hostname())
+	host = strings.TrimPrefix(host, "www.")
 
 	switch {
-	case strings.Contains(host, "youtube.com"):
+	case hostMatches(host, "youtube.com"), hostMatches(host, "youtu.be"):
 		return "video"
-	case strings.Contains(host, "github.com"):
+	case hostMatches(host, "github.com"):
 		return "repo"
-	case strings.Contains(host, "imdb.com"), strings.Contains(host, "rottentomatoes.com"):
+	case hostMatches(host, "imdb.com"), hostMatches(host, "rottentomatoes.com"):
 		return "movie"
-	case strings.Contains(host, "goodreads.com"):
+	case hostMatches(host, "goodreads.com"):
 		return "book"
-	case strings.Contains(host, "x.com"):
+	case hostMatches(host, "x.com"), hostMatches(host, "twitter.com"):
 		return "twitter link"
 	default:
 		return "article"

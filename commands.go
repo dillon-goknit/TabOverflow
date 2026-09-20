@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand/v2"
 	"strings"
 	"time"
 )
@@ -67,7 +68,29 @@ func cmdList(w io.Writer) error {
 }
 
 func cmdPick(w io.Writer) error {
-	fmt.Println("pick not yet implemented")
+	links, err := load()
+	if err != nil {
+		return err
+	}
+
+	var unread []Link
+	for _, link := range links {
+		if !link.Read {
+			unread = append(unread, link)
+		}
+	}
+
+	if len(unread) == 0 {
+		return errors.New("nothing to pick")
+	}
+
+	choice := unread[rand.IntN(len(unread))]
+	if len(choice.Tags) == 0 {
+		fmt.Fprintln(w, choice.URL)
+	} else {
+		fmt.Fprintf(w, "%s [%s]\n", choice.URL, choice.Tags[0])
+	}
+
 	return nil
 }
 
@@ -94,7 +117,7 @@ func cmdDone(w io.Writer, url string) error {
 	if !found {
 		return fmt.Errorf("not in pile: %s", trimmed)
 	}
-
+	fmt.Fprintf(w, "marked as read: %s\n", trimmed)
 	return save(links)
 }
 
@@ -122,6 +145,6 @@ func cmdRm(w io.Writer, url string) error {
 	if !found {
 		return fmt.Errorf("not in pile: %s", trimmed)
 	}
-
+	fmt.Fprintf(w, "removed: %s\n", trimmed)
 	return save(kept)
 }

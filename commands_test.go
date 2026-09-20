@@ -374,3 +374,178 @@ func TestCmdRmRejectsEmpty(t *testing.T) {
 		t.Errorf("expected error on empty URL, got nil")
 	}
 }
+
+func TestCmdPickEmpty(t *testing.T) {
+	useTempStore(t)
+
+	var buf bytes.Buffer
+	if err := cmdPick(&buf); err == nil {
+		t.Errorf("expected error picking from an empty pile, got nil")
+	}
+}
+
+func TestCmdPickAllRead(t *testing.T) {
+	useTempStore(t)
+
+	links := []Link{{URL: "https://example.com/done", Read: true}}
+	if err := save(links); err != nil {
+		t.Fatalf("save failed: %v", err)
+	}
+
+	var buf bytes.Buffer
+	if err := cmdPick(&buf); err == nil {
+		t.Errorf("expected error when every link is read, got nil")
+	}
+}
+
+func TestCmdPickOutputsOneLink(t *testing.T) {
+	useTempStore(t)
+
+	links := []Link{
+		{URL: "https://example.com/one", Tags: []string{"article"}},
+		{URL: "https://example.com/two", Tags: []string{"article"}},
+		{URL: "https://example.com/three", Tags: []string{"article"}},
+	}
+	if err := save(links); err != nil {
+		t.Fatalf("save failed: %v", err)
+	}
+
+	var buf bytes.Buffer
+	if err := cmdPick(&buf); err != nil {
+		t.Fatalf("cmdPick failed: %v", err)
+	}
+
+	got := strings.TrimSpace(buf.String())
+	if got == "" {
+		t.Fatalf("cmdPick wrote nothing")
+	}
+	if lines := strings.Split(got, "\n"); len(lines) != 1 {
+		t.Fatalf("cmdPick wrote %d lines, want 1: %q", len(lines), got)
+	}
+
+	found := false
+	for _, link := range links {
+		if got == link.URL+" ["+link.Tags[0]+"]" {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("output %q does not match the list format for any link in the pile", got)
+	}
+}
+
+func TestCmdPickSkipsReadLinks(t *testing.T) {
+	useTempStore(t)
+
+	links := []Link{
+		{URL: "https://example.com/read-one", Tags: []string{"article"}, Read: true},
+		{URL: "https://example.com/unread", Tags: []string{"article"}},
+		{URL: "https://example.com/read-two", Tags: []string{"article"}, Read: true},
+	}
+	if err := save(links); err != nil {
+		t.Fatalf("save failed: %v", err)
+	}
+
+	for i := 0; i < 20; i++ {
+		var buf bytes.Buffer
+		if err := cmdPick(&buf); err != nil {
+			t.Fatalf("cmdPick failed on run %d: %v", i, err)
+		}
+		if got := buf.String(); !strings.Contains(got, "https://example.com/unread") {
+			t.Fatalf("run %d picked %q, want the only unread link", i, got)
+		}
+	}
+}
+
+func TestCmdPickLeavesPileUnchanged(t *testing.T) {
+	useTempStore(t)
+
+	links := []Link{
+		{URL: "https://example.com/one", Tags: []string{"article"}},
+		{URL: "https://example.com/two", Tags: []string{"article"}},
+	}
+	if err := save(links); err != nil {
+		t.Fatalf("save failed: %v", err)
+	}
+
+	var buf bytes.Buffer
+	if err := cmdPick(&buf); err != nil {
+		t.Fatalf("cmdPick failed: %v", err)
+	}
+
+	got, err := load()
+	if err != nil {
+		t.Fatalf("load failed: %v", err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("got %d links, want 2", len(got))
+	}
+	for i, link := range got {
+		if link.Read {
+			t.Errorf("link %d (%s) was marked read; pick should not modify the pile", i, link.URL)
+		}
+	}
+}
+
+func TestCmdPickUntaggedLink(t *testing.T) {
+	useTempStore(t)
+
+	links := []Link{{URL: "https://example.com/untagged"}}
+	if err := save(links); err != nil {
+		t.Fatalf("save failed: %v", err)
+	}
+
+	var buf bytes.Buffer
+	if err := cmdPick(&buf); err != nil {
+		t.Fatalf("cmdPick failed: %v", err)
+	}
+
+	got := strings.TrimSpace(buf.String())
+	if got != "https://example.com/untagged" {
+		t.Errorf("output = %q, want the bare URL", got)
+	}
+}
+
+func TestCmdDoneConfirms(t *testing.T) {
+	useTempStore(t)
+
+	links := []Link{{URL: "https://example.com/post", Tags: []string{"article"}}}
+	if err := save(links); err != nil {
+		t.Fatalf("save failed: %v", err)
+	}
+
+	var buf bytes.Buffer
+	if err := cmdDone(&buf, "https://example.com/post"); err != nil {
+		t.Fatalf("cmdDone failed: %v", err)
+	}
+
+	got := buf.String()
+	if got == "" {
+		t.Fatalf("cmdDone wrote nothing, want a confirmation")
+	}
+	if !strings.Contains(got, "https://example.com/post") {
+		t.Errorf("confirmation = %q, want it to name the link", got)
+	}
+}
+
+func TestCmdRmConfirms(t *testing.T) {
+	useTempStore(t)
+
+	links := []Link{{URL: "https://example.com/post", Tags: []string{"article"}}}
+	if err := save(links); err != nil {
+		t.Fatalf("save failed: %v", err)
+	}
+
+	var buf bytes.Buffer
+	if err := cmdRm(&buf, "https://example.com/post"); err != nil {
+		t.Fatalf("cmdRm failed: %v", err)
+	}
+
+	got := buf.String()
+	if got == "" {
+		t.Fatalf("cmdRm wrote nothing, want a confirmation")
+	}
+	if !strings.Contains(got, "https://example.com/post") {
+		t.Errorf("confirmation = %q, want it to name the link", got)
+	}
+}

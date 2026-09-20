@@ -9,7 +9,9 @@ import (
 func TestCmdAdd(t *testing.T) {
 	useTempStore(t)
 
-	if err := cmdAdd("https://example.com/article"); err != nil {
+	var buf bytes.Buffer
+
+	if err := cmdAdd(&buf, "https://example.com/article"); err != nil {
 		t.Fatalf("cmdAdd failed: %v", err)
 	}
 
@@ -22,7 +24,7 @@ func TestCmdAdd(t *testing.T) {
 		t.Fatalf("got %d links, want 1", len(links))
 	}
 
-	if err := cmdAdd("https://example.com/article"); err == nil {
+	if err := cmdAdd(&buf, "https://example.com/article"); err == nil {
 		t.Errorf("expected error on duplicate, got nil")
 	}
 }
@@ -30,9 +32,11 @@ func TestCmdAdd(t *testing.T) {
 func TestCmdAddKeepsRawURL(t *testing.T) {
 	useTempStore(t)
 
+	var buf bytes.Buffer
+
 	raw := "https://example.com/post?utm_source=twitter&id=42"
 
-	if err := cmdAdd(raw); err != nil {
+	if err := cmdAdd(&buf, raw); err != nil {
 		t.Fatalf("cmdAdd failed: %v", err)
 	}
 
@@ -48,9 +52,11 @@ func TestCmdAddKeepsRawURL(t *testing.T) {
 func TestCmdAddTrimsInput(t *testing.T) {
 	useTempStore(t)
 
+	var buf bytes.Buffer
+
 	raw := "https://example.com/post"
 
-	if err := cmdAdd("  " + raw + "  "); err != nil {
+	if err := cmdAdd(&buf, "  "+raw+"  "); err != nil {
 		t.Fatalf("cmdAdd failed: %v", err)
 	}
 
@@ -66,10 +72,12 @@ func TestCmdAddTrimsInput(t *testing.T) {
 func TestCmdAddDedupesStoredTrackingURL(t *testing.T) {
 	useTempStore(t)
 
-	if err := cmdAdd("https://example.com/article?utm_source=x"); err != nil {
+	var buf bytes.Buffer
+
+	if err := cmdAdd(&buf, "https://example.com/article?utm_source=x"); err != nil {
 		t.Fatalf("first add: %v", err)
 	}
-	if err := cmdAdd("https://example.com/article"); err == nil {
+	if err := cmdAdd(&buf, "https://example.com/article"); err == nil {
 		t.Errorf("expected error on duplicate of a stored tracking URL, got nil")
 	}
 }
@@ -77,7 +85,9 @@ func TestCmdAddDedupesStoredTrackingURL(t *testing.T) {
 func TestCmdAddRejectsEmpty(t *testing.T) {
 	useTempStore(t)
 
-	if err := cmdAdd("   "); err == nil {
+	var buf bytes.Buffer
+
+	if err := cmdAdd(&buf, "   "); err == nil {
 		t.Errorf("expected error on empty URL, got nil")
 	}
 
@@ -547,5 +557,42 @@ func TestCmdRmConfirms(t *testing.T) {
 	}
 	if !strings.Contains(got, "https://example.com/post") {
 		t.Errorf("confirmation = %q, want it to name the link", got)
+	}
+}
+
+func TestCmdAddConfirms(t *testing.T) {
+	useTempStore(t)
+
+	var buf bytes.Buffer
+	if err := cmdAdd(&buf, "https://github.com/foo/bar"); err != nil {
+		t.Fatalf("cmdAdd failed: %v", err)
+	}
+
+	got := strings.TrimSpace(buf.String())
+	if got == "" {
+		t.Fatalf("cmdAdd wrote nothing, want a confirmation")
+	}
+	if !strings.Contains(got, "https://github.com/foo/bar") {
+		t.Errorf("confirmation = %q, want it to name the link", got)
+	}
+	if !strings.Contains(got, "[repo]") {
+		t.Errorf("confirmation = %q, want it to name the guessed tag", got)
+	}
+}
+
+func TestCmdAddSilentOnDuplicate(t *testing.T) {
+	useTempStore(t)
+
+	var buf bytes.Buffer
+	if err := cmdAdd(&buf, "https://example.com/post"); err != nil {
+		t.Fatalf("first add failed: %v", err)
+	}
+
+	buf.Reset()
+	if err := cmdAdd(&buf, "https://example.com/post"); err == nil {
+		t.Fatalf("expected error on duplicate, got nil")
+	}
+	if got := buf.String(); got != "" {
+		t.Errorf("wrote %q on a rejected add, want nothing", got)
 	}
 }

@@ -24,7 +24,7 @@ func run(w io.Writer, args []string) error {
 		if len(args) < 2 {
 			return errors.New("add requires a URL")
 		}
-		return cmdAdd(args[1])
+		return cmdAdd(w, args[1])
 	case "list":
 		return cmdList(w)
 	case "pick":

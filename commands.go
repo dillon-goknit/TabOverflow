@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func cmdAdd(rawURL string) error {
+func cmdAdd(w io.Writer, rawURL string) error {
 	raw := strings.TrimSpace(rawURL)
 	if raw == "" {
 		return errors.New("empty URL")
@@ -36,7 +36,12 @@ func cmdAdd(rawURL string) error {
 
 	links = append(links, link)
 
-	return save(links)
+	if err := save(links); err != nil {
+		return err
+	}
+
+	fmt.Fprintf(w, "added: %s [%s]\n", link.URL, link.Tags[0])
+	return nil
 }
 
 func cmdList(w io.Writer) error {

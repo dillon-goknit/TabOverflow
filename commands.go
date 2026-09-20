@@ -99,6 +99,29 @@ func cmdDone(w io.Writer, url string) error {
 }
 
 func cmdRm(w io.Writer, url string) error {
-	fmt.Println("rm not yet implemented")
-	return nil
+	trimmed := strings.TrimSpace(url)
+	if trimmed == "" {
+		return errors.New("empty URL")
+	}
+
+	key := normalizeURL(trimmed)
+	links, err := load()
+	if err != nil {
+		return err
+	}
+
+	var kept []Link
+	found := false
+	for _, link := range links {
+		if normalizeURL(link.URL) == key {
+			found = true
+			continue
+		}
+		kept = append(kept, link)
+	}
+	if !found {
+		return fmt.Errorf("not in pile: %s", trimmed)
+	}
+
+	return save(kept)
 }

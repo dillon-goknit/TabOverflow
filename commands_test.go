@@ -287,3 +287,90 @@ func TestCmdDoneRejectsEmpty(t *testing.T) {
 		t.Errorf("expected error on empty URL, got nil")
 	}
 }
+
+func TestCmdRmRemovesLink(t *testing.T) {
+	useTempStore(t)
+
+	links := []Link{
+		{URL: "https://example.com/post", Tags: []string{"article"}},
+		{URL: "https://github.com/foo/bar", Tags: []string{"repo"}},
+	}
+	if err := save(links); err != nil {
+		t.Fatalf("save failed: %v", err)
+	}
+
+	var buf bytes.Buffer
+	if err := cmdRm(&buf, "https://example.com/post"); err != nil {
+		t.Fatalf("cmdRm failed: %v", err)
+	}
+
+	got, err := load()
+	if err != nil {
+		t.Fatalf("load failed: %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("got %d links, want 1", len(got))
+	}
+	if got[0].URL != "https://github.com/foo/bar" {
+		t.Errorf("remaining link = %q, want the github one", got[0].URL)
+	}
+}
+
+func TestCmdRmMatchesNormalized(t *testing.T) {
+	useTempStore(t)
+
+	links := []Link{
+		{URL: "https://example.com/stored-dirty?utm_source=x"},
+		{URL: "https://example.com/stored-clean"},
+	}
+	if err := save(links); err != nil {
+		t.Fatalf("save failed: %v", err)
+	}
+
+	var buf bytes.Buffer
+	if err := cmdRm(&buf, "https://example.com/stored-dirty"); err != nil {
+		t.Fatalf("cmdRm on clean form failed: %v", err)
+	}
+	if err := cmdRm(&buf, "https://example.com/stored-clean?utm_source=x"); err != nil {
+		t.Fatalf("cmdRm on dirty form failed: %v", err)
+	}
+
+	got, err := load()
+	if err != nil {
+		t.Fatalf("load failed: %v", err)
+	}
+	if len(got) != 0 {
+		t.Errorf("got %d links, want 0: %v", len(got), got)
+	}
+}
+
+func TestCmdRmUnknownURL(t *testing.T) {
+	useTempStore(t)
+
+	links := []Link{{URL: "https://example.com/post"}}
+	if err := save(links); err != nil {
+		t.Fatalf("save failed: %v", err)
+	}
+
+	var buf bytes.Buffer
+	if err := cmdRm(&buf, "https://example.com/nope"); err == nil {
+		t.Errorf("expected error for a URL not in the pile, got nil")
+	}
+
+	got, err := load()
+	if err != nil {
+		t.Fatalf("load failed: %v", err)
+	}
+	if len(got) != 1 {
+		t.Errorf("got %d links, want the pile untouched at 1", len(got))
+	}
+}
+
+func TestCmdRmRejectsEmpty(t *testing.T) {
+	useTempStore(t)
+
+	var buf bytes.Buffer
+	if err := cmdRm(&buf, "   "); err == nil {
+		t.Errorf("expected error on empty URL, got nil")
+	}
+}

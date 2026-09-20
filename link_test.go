@@ -59,6 +59,21 @@ func TestNormalizeURL(t *testing.T) {
 			"https://example.com/article?fbclid=123&gclid=456",
 			"https://example.com/article",
 		},
+		{
+			"strips www prefix",
+			"https://www.example.com/post",
+			"https://example.com/post",
+		},
+		{
+			"strips www alongside tracking params",
+			"https://www.youtube.com/watch?v=abc&utm_source=x",
+			"https://youtube.com/watch?v=abc",
+		},
+		{
+			"keeps a host that merely starts with www",
+			"https://wwwfoo.com/post",
+			"https://wwwfoo.com/post",
+		},
 	}
 
 	for _, c := range cases {

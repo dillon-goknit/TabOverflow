@@ -53,6 +53,7 @@ func cmdList(w io.Writer) error {
 
 	if len(unread) == 0 {
 		fmt.Fprintln(w, "no links")
+		return nil
 	}
 
 	for _, link := range unread {
@@ -71,8 +72,30 @@ func cmdPick(w io.Writer) error {
 }
 
 func cmdDone(w io.Writer, url string) error {
-	fmt.Println("done not yet implemented")
-	return nil
+	trimmed := strings.TrimSpace(url)
+	if trimmed == "" {
+		return errors.New("empty URL")
+	}
+
+	key := normalizeURL(trimmed)
+	links, err := load()
+	if err != nil {
+		return err
+	}
+
+	found := false
+	for i := range links {
+		if normalizeURL(links[i].URL) == key {
+			links[i].Read = true
+			found = true
+			break
+		}
+	}
+	if !found {
+		return fmt.Errorf("not in pile: %s", trimmed)
+	}
+
+	return save(links)
 }
 
 func cmdRm(w io.Writer, url string) error {

@@ -198,3 +198,92 @@ func TestCmdListUntaggedLink(t *testing.T) {
 		t.Errorf("output = %q, want no tag brackets", got)
 	}
 }
+
+func TestCmdDoneMarksRead(t *testing.T) {
+	useTempStore(t)
+
+	links := []Link{
+		{URL: "https://example.com/post", Tags: []string{"article"}},
+		{URL: "https://github.com/foo/bar", Tags: []string{"repo"}},
+	}
+	if err := save(links); err != nil {
+		t.Fatalf("save failed: %v", err)
+	}
+
+	var buf bytes.Buffer
+	if err := cmdDone(&buf, "https://example.com/post"); err != nil {
+		t.Fatalf("cmdDone failed: %v", err)
+	}
+
+	got, err := load()
+	if err != nil {
+		t.Fatalf("load failed: %v", err)
+	}
+	if !got[0].Read {
+		t.Errorf("first link Read = false, want true")
+	}
+	if got[1].Read {
+		t.Errorf("second link Read = true, want false")
+	}
+}
+
+func TestCmdDoneMatchesNormalized(t *testing.T) {
+	useTempStore(t)
+
+	links := []Link{
+		{URL: "https://example.com/stored-dirty?utm_source=x"},
+		{URL: "https://example.com/stored-clean"},
+	}
+	if err := save(links); err != nil {
+		t.Fatalf("save failed: %v", err)
+	}
+
+	var buf bytes.Buffer
+	if err := cmdDone(&buf, "https://example.com/stored-dirty"); err != nil {
+		t.Fatalf("cmdDone on clean form failed: %v", err)
+	}
+	if err := cmdDone(&buf, "https://example.com/stored-clean?utm_source=x"); err != nil {
+		t.Fatalf("cmdDone on dirty form failed: %v", err)
+	}
+
+	got, err := load()
+	if err != nil {
+		t.Fatalf("load failed: %v", err)
+	}
+	for i, link := range got {
+		if !link.Read {
+			t.Errorf("link %d (%s) Read = false, want true", i, link.URL)
+		}
+	}
+}
+
+func TestCmdDoneUnknownURL(t *testing.T) {
+	useTempStore(t)
+
+	links := []Link{{URL: "https://example.com/post"}}
+	if err := save(links); err != nil {
+		t.Fatalf("save failed: %v", err)
+	}
+
+	var buf bytes.Buffer
+	if err := cmdDone(&buf, "https://example.com/nope"); err == nil {
+		t.Errorf("expected error for a URL not in the pile, got nil")
+	}
+
+	got, err := load()
+	if err != nil {
+		t.Fatalf("load failed: %v", err)
+	}
+	if got[0].Read {
+		t.Errorf("link was marked read despite no match")
+	}
+}
+
+func TestCmdDoneRejectsEmpty(t *testing.T) {
+	useTempStore(t)
+
+	var buf bytes.Buffer
+	if err := cmdDone(&buf, "   "); err == nil {
+		t.Errorf("expected error on empty URL, got nil")
+	}
+}

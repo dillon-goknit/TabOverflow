@@ -1,44 +1,46 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 )
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("usage: taboverflow: <command>")
-		return
+	if err := run(os.Args[1:]); err != nil {
+		fmt.Fprintln(os.Stderr, "taboverflow:", err)
+		os.Exit(1)
+	}
+}
+
+func run(args []string) error {
+	if len(args) < 1 {
+		return errors.New("no command given")
 	}
 
-	command := os.Args[1]
-	switch command {
+	switch args[0] {
 	case "add":
-		if len(os.Args) < 3 {
-			fmt.Println("add requires a URL")
-			return
+		if len(args) < 2 {
+			return errors.New("add requires a URL")
 		}
-		if err := cmdAdd(os.Args[2]); err != nil {
-			fmt.Println("Error", err)
-		}
+		return cmdAdd(args[1])
 	case "list":
 		cmdList()
 	case "pick":
 		cmdPick()
 	case "done":
-		if len(os.Args) < 3 {
-			fmt.Println("done requires a URL")
-			return
+		if len(args) < 2 {
+			return errors.New("done requires a URL")
 		}
-		cmdDone(os.Args[2])
+		cmdDone(args[1])
 	case "rm":
-		if len(os.Args) < 3 {
-			fmt.Println("rm requires a URL")
-			return
+		if len(args) < 2 {
+			return errors.New("rm requires a URL")
 		}
-		cmdRm(os.Args[2])
+		cmdRm(args[1])
 	default:
-		fmt.Printf("unknown command: %s\n", command)
-
+		return fmt.Errorf("unknown command: %s", args[0])
 	}
+
+	return nil
 }

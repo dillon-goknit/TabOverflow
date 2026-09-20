@@ -27,7 +27,7 @@ func importLinks(path string) ([]Link, error) {
 		if line == "" {
 			continue
 		}
-		links = append(links, Link{URL: normalizeURL(line)})
+		links = append(links, Link{URL: line})
 	}
 
 	return links, nil

@@ -3,11 +3,17 @@ package main
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 )
 
 func cmdAdd(rawURL string) error {
-	url := normalizeURL(rawURL)
+	raw := strings.TrimSpace(rawURL)
+	if raw == "" {
+		return errors.New("empty URL")
+	}
+
+	key := normalizeURL(raw)
 
 	links, err := load()
 	if err != nil {
@@ -15,15 +21,15 @@ func cmdAdd(rawURL string) error {
 	}
 
 	for _, existing := range links {
-		if existing.URL == url {
+		if normalizeURL(existing.URL) == key {
 			return errors.New("link already exists")
 		}
 	}
 
 	link := Link{
-		URL:   url,
+		URL:   raw,
 		Added: time.Now(),
-		Tags:  []string{guessType(url)},
+		Tags:  []string{guessType(raw)},
 	}
 
 	links = append(links, link)
